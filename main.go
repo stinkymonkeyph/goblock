@@ -12,6 +12,6 @@ func init() {
 
 func main() {
 	bc := blockchain.NewBlockchain()
-	bc.CreateBlock(23, "hash #1")
+	bc.CreateBlock(1, bc.LasBlock().Hash())
 	bc.Print()
 }

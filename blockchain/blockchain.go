@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/stinkymonkeyph/goblock/block"
@@ -14,12 +13,13 @@ type BlockChain struct {
 }
 
 func NewBlockchain() *BlockChain {
+	b := &block.Block{}
 	bc := new(BlockChain)
-	bc.CreateBlock(0, "hash #0 genesis block")
+	bc.CreateBlock(0, b.Hash())
 	return bc
 }
 
-func (bc *BlockChain) CreateBlock(nonce int, previousHash string) *block.Block {
+func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {
 	b := block.NewBlock(nonce, previousHash)
 	bc.chain = append(bc.chain, b)
 
@@ -34,6 +34,6 @@ func (bc *BlockChain) Print() {
 	fmt.Printf("%s \n", strings.Repeat("#", 27))
 }
 
-func init() {
-	log.SetPrefix("Blockchain Node: ")
+func (bc *BlockChain) LasBlock() *block.Block {
+	return bc.chain[len(bc.chain)-1]
 }
