@@ -5,10 +5,11 @@ import (
 	"strings"
 
 	"github.com/stinkymonkeyph/goblock/block"
+	"github.com/stinkymonkeyph/goblock/transaction"
 )
 
 type BlockChain struct {
-	transactionPool []string
+	transactionPool []*transaction.Transaction
 	chain           []*block.Block
 }
 
@@ -20,7 +21,7 @@ func NewBlockchain() *BlockChain {
 }
 
 func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {
-	b := block.NewBlock(nonce, previousHash)
+	b := block.NewBlock(nonce, previousHash, bc.transactionPool)
 	bc.chain = append(bc.chain, b)
 
 	return b
@@ -36,4 +37,10 @@ func (bc *BlockChain) Print() {
 
 func (bc *BlockChain) LasBlock() *block.Block {
 	return bc.chain[len(bc.chain)-1]
+}
+
+func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32) bool {
+	t := transaction.NewTransaction(sender, recipient, value)
+	bc.transactionPool = append(bc.transactionPool, t)
+	return true
 }
