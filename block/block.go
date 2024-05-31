@@ -10,28 +10,28 @@ import (
 )
 
 type Block struct {
-	nonce        int
-	previousHash [32]byte
-	timestamp    int64
-	transactions []*transaction.Transaction
+	Timestamp    int64
+	Nonce        int
+	PreviousHash [32]byte
+	Transactions []*transaction.Transaction
 }
 
 func NewBlock(nonce int, previousHash [32]byte, transactions []*transaction.Transaction) *Block {
 	b := new(Block)
 
-	b.timestamp = time.Now().UnixNano()
-	b.nonce = nonce
-	b.previousHash = previousHash
-	b.transactions = transactions
+	b.Timestamp = time.Now().UnixNano()
+	b.Nonce = nonce
+	b.PreviousHash = previousHash
+	b.Transactions = transactions
 	return b
 }
 
 func (b *Block) Print() {
-	fmt.Printf("timestamp\t %d \n", b.timestamp)
-	fmt.Printf("nonce\t %d \n", b.nonce)
-	fmt.Printf("previousHash\t %x \n", b.previousHash)
-	fmt.Printf("transaction_count \t %d \n", len(b.transactions))
-	for _, t := range b.transactions {
+	fmt.Printf("timestamp\t %d \n", b.Timestamp)
+	fmt.Printf("nonce\t %d \n", b.Nonce)
+	fmt.Printf("previousHash\t %x \n", b.PreviousHash)
+	fmt.Printf("transaction_count \t %d \n", len(b.Transactions))
+	for _, t := range b.Transactions {
 		t.Print()
 	}
 }
@@ -48,9 +48,9 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 		PreviousHash [32]byte                   `json:"previous_hash"`
 		Transactions []*transaction.Transaction `json:"transactions"`
 	}{
-		Timestamp:    b.timestamp,
-		Nonce:        b.nonce,
-		PreviousHash: b.previousHash,
-		Transactions: b.transactions,
+		Timestamp:    b.Timestamp,
+		Nonce:        b.Nonce,
+		PreviousHash: b.PreviousHash,
+		Transactions: b.Transactions,
 	})
 }

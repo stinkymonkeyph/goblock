@@ -15,6 +15,8 @@ func main() {
 
 	bc.AddTransaction("Rick", "Morty", 130)
 	bc.AddTransaction("Gaben", "Notail", 120)
-	bc.CreateBlock(1, bc.LasBlock().Hash())
+
+	nonce := bc.ProofOfWork()
+	bc.CreateBlock(nonce, bc.LasBlock().Hash())
 	bc.Print()
 }

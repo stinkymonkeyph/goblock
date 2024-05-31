@@ -8,6 +8,8 @@ import (
 	"github.com/stinkymonkeyph/goblock/transaction"
 )
 
+const MINING_DIFICULTY = 3
+
 type BlockChain struct {
 	transactionPool []*transaction.Transaction
 	chain           []*block.Block
@@ -43,4 +45,31 @@ func (bc *BlockChain) AddTransaction(sender string, recipient string, value floa
 	t := transaction.NewTransaction(sender, recipient, value)
 	bc.transactionPool = append(bc.transactionPool, t)
 	return true
+}
+
+func (bc *BlockChain) ValidProof(nonce int, previousHash [32]byte, transactions []*transaction.Transaction, difficulty int) bool {
+	zeros := strings.Repeat("0", difficulty)
+	guessBlock := block.Block{Timestamp: 0, Nonce: nonce, PreviousHash: previousHash, Transactions: transactions}
+	guessHashStr := fmt.Sprintf("%x", guessBlock.Hash())
+	return guessHashStr[:difficulty] == zeros
+}
+
+func (bc *BlockChain) ProofOfWork() int {
+	t := bc.CopyTransactionPool()
+	previousHash := bc.LasBlock().Hash()
+	nonce := 0
+
+	for !bc.ValidProof(nonce, previousHash, t, MINING_DIFICULTY) {
+		nonce += 1
+	}
+
+	return nonce
+}
+
+func (bc *BlockChain) CopyTransactionPool() []*transaction.Transaction {
+	t := make([]*transaction.Transaction, 0)
+	for _, tx := range bc.transactionPool {
+		t = append(t, transaction.NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value))
+	}
+	return t
 }
