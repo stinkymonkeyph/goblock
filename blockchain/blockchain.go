@@ -8,7 +8,7 @@ import (
 	"github.com/stinkymonkeyph/goblock/transaction"
 )
 
-const MINING_DIFICULTY = 3
+const MINING_DIFICULTY = 4
 
 type BlockChain struct {
 	transactionPool []*transaction.Transaction
@@ -25,7 +25,7 @@ func NewBlockchain() *BlockChain {
 func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *block.Block {
 	b := block.NewBlock(nonce, previousHash, bc.transactionPool)
 	bc.chain = append(bc.chain, b)
-
+	bc.transactionPool = []*transaction.Transaction{}
 	return b
 }
 
