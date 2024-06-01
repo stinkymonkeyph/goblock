@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/stinkymonkeyph/goblock/blockchain"
@@ -11,7 +12,8 @@ func init() {
 }
 
 func main() {
-	bc := blockchain.NewBlockchain("miner")
+	minerAddress := "miner"
+	bc := blockchain.NewBlockchain(minerAddress)
 
 	bc.AddTransaction("Rick", "Morty", 130)
 	bc.AddTransaction("Gaben", "Notail", 120)
@@ -24,4 +26,6 @@ func main() {
 	bc.Mining()
 
 	bc.Print()
+
+	fmt.Printf("Miner Total Value: %1.f \n", bc.CalculateTotalAmount(minerAddress))
 }
