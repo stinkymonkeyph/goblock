@@ -2,23 +2,30 @@ package blockchain
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/stinkymonkeyph/goblock/block"
 	"github.com/stinkymonkeyph/goblock/transaction"
 )
 
-const MINING_DIFICULTY = 4
+const (
+	MINING_DIFICULTY = 4
+	MINING_SENDER    = "BLOCKCHAIN REWARD SYSTEM"
+	MINING_REWARD    = 1.0
+)
 
 type BlockChain struct {
-	transactionPool []*transaction.Transaction
-	chain           []*block.Block
+	transactionPool   []*transaction.Transaction
+	chain             []*block.Block
+	blockchainAddress string
 }
 
-func NewBlockchain() *BlockChain {
+func NewBlockchain(blockchainAddress string) *BlockChain {
 	b := &block.Block{}
 	bc := new(BlockChain)
 	bc.CreateBlock(0, b.Hash())
+	bc.blockchainAddress = blockchainAddress
 	return bc
 }
 
@@ -72,4 +79,13 @@ func (bc *BlockChain) CopyTransactionPool() []*transaction.Transaction {
 		t = append(t, transaction.NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value))
 	}
 	return t
+}
+
+func (bc *BlockChain) Mining() bool {
+	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD)
+	nonce := bc.ProofOfWork()
+	previousHash := bc.LasBlock().Hash()
+	bc.CreateBlock(nonce, previousHash)
+	log.Println("action=mining, status=success")
+	return true
 }

@@ -7,23 +7,21 @@ import (
 )
 
 func init() {
-	log.SetPrefix("Blockchain Node: ")
+	log.SetPrefix("Goblock Node: ")
 }
 
 func main() {
-	bc := blockchain.NewBlockchain()
+	bc := blockchain.NewBlockchain("miner")
 
 	bc.AddTransaction("Rick", "Morty", 130)
 	bc.AddTransaction("Gaben", "Notail", 120)
 
-	nonce := bc.ProofOfWork()
-	bc.CreateBlock(nonce, bc.LasBlock().Hash())
+	bc.Mining()
 
 	bc.AddTransaction("Rick", "Morty", 2000)
 	bc.AddTransaction("Gaben", "Notail", 1220)
 
-	nonce = bc.ProofOfWork()
-	bc.CreateBlock(nonce, bc.LasBlock().Hash())
+	bc.Mining()
 
 	bc.Print()
 }
