@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/stinkymonkeyph/goblock/blockchain"
+	blockchain "github.com/stinkymonkeyph/goblock/node/blockhain"
 )
 
 func init() {

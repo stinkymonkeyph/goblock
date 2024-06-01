@@ -5,8 +5,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/stinkymonkeyph/goblock/block"
-	"github.com/stinkymonkeyph/goblock/transaction"
+	"github.com/stinkymonkeyph/goblock/node/block"
+	"github.com/stinkymonkeyph/goblock/node/transaction"
 )
 
 const (
@@ -58,6 +58,7 @@ func (bc *BlockChain) ValidProof(nonce int, previousHash [32]byte, transactions 
 	zeros := strings.Repeat("0", difficulty)
 	guessBlock := block.Block{Timestamp: 0, Nonce: nonce, PreviousHash: previousHash, Transactions: transactions}
 	guessHashStr := fmt.Sprintf("%x", guessBlock.Hash())
+	log.Printf("action=validProof, status=verifying, metadata={hash: %s, nonce: %d} \n", guessHashStr, nonce)
 	return guessHashStr[:difficulty] == zeros
 }
 

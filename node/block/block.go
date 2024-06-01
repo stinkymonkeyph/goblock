@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stinkymonkeyph/goblock/transaction"
+	"github.com/stinkymonkeyph/goblock/node/transaction"
 )
 
 type Block struct {
