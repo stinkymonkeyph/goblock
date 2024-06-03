@@ -33,6 +33,7 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *block.Block
 	b := block.NewBlock(nonce, previousHash, bc.transactionPool)
 	bc.chain = append(bc.chain, b)
 	bc.transactionPool = []*transaction.Transaction{}
+	log.Printf("action=createBlock, status=success, metadata={timestamp: %d, nonce: %d, previousHash: %x} \n", b.Timestamp, b.Nonce, b.PreviousHash)
 	return b
 }
 

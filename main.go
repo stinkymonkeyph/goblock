@@ -5,6 +5,7 @@ import (
 	"log"
 
 	blockchain "github.com/stinkymonkeyph/goblock/node/blockhain"
+	"github.com/stinkymonkeyph/goblock/wallet"
 )
 
 func init() {
@@ -25,7 +26,9 @@ func main() {
 
 	bc.Mining()
 
-	bc.Print()
-
 	fmt.Printf("Miner Total Value: %1.f \n", bc.CalculateTotalAmount(minerAddress))
+	w := wallet.NewWallet()
+	fmt.Println(w.PrivateKeyStr())
+	fmt.Println(w.PublicKeyStr())
+	fmt.Println(w.Address())
 }
