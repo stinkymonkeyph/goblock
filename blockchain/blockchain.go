@@ -1,9 +1,14 @@
 package blockchain
 
 import (
+	"crypto/ecdsa"
+	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
+
+	"github.com/stinkymonkeyph/goblock/utils"
 )
 
 const (
@@ -46,17 +51,30 @@ func (bc *BlockChain) LasBlock() *Block {
 	return bc.chain[len(bc.chain)-1]
 }
 
-func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32) bool {
+func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
 	t := NewTransaction(sender, recipient, value)
-	bc.transactionPool = append(bc.transactionPool, t)
+
+	if sender == MINING_SENDER {
+		bc.transactionPool = append(bc.transactionPool, t)
+	} else if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
+		bc.transactionPool = append(bc.transactionPool, t)
+	} else {
+		log.Println("action=addTransaction, state=failed, status_reason=invalid_signature")
+		return false
+	}
 	return true
+}
+
+func (bc *BlockChain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKey, s *utils.Signature, t *Transaction) bool {
+	m, _ := json.Marshal(t)
+	h := sha256.Sum256([]byte(m))
+	return ecdsa.Verify(senderPublicKey, h[:], s.R, s.S)
 }
 
 func (bc *BlockChain) ValidProof(nonce int, previousHash [32]byte, transactions []*Transaction, difficulty int) bool {
 	zeros := strings.Repeat("0", difficulty)
 	guessBlock := Block{Timestamp: 0, Nonce: nonce, PreviousHash: previousHash, Transactions: transactions}
 	guessHashStr := fmt.Sprintf("%x", guessBlock.Hash())
-	log.Printf("action=validProof, status=verifying, metadata={hash: %s, nonce: %d} \n", guessHashStr, nonce)
 	return guessHashStr[:difficulty] == zeros
 }
 
@@ -81,7 +99,7 @@ func (bc *BlockChain) CopyTransactionPool() []*Transaction {
 }
 
 func (bc *BlockChain) Mining() bool {
-	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD)
+	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LasBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
