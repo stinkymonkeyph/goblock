@@ -59,6 +59,14 @@ func NewWallet() *Wallet {
 	return w
 }
 
+func (w *Wallet) PrivateKey() *ecdsa.PrivateKey {
+	return w.privateKey
+}
+
+func (w *Wallet) PublicKey() *ecdsa.PublicKey {
+	return w.publicKey
+}
+
 func (w *Wallet) PrivateKeyStr() string {
 	return fmt.Sprintf("%x", w.privateKey.D.Bytes())
 }
