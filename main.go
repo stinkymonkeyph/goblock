@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	blockchain "github.com/stinkymonkeyph/goblock/node/blockhain"
+	"github.com/stinkymonkeyph/goblock/blockchain"
 	"github.com/stinkymonkeyph/goblock/wallet"
 )
 

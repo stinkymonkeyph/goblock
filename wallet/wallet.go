@@ -24,6 +24,7 @@ func NewWallet() *Wallet {
 	w.privateKey = privateKey
 	w.publicKey = &privateKey.PublicKey
 
+	//https://en.bitcoin.it/wiki/Technical_background_of_version_1_Bitcoin_addresses
 	h2 := sha256.New()
 	h2.Write(w.publicKey.X.Bytes())
 	h2.Write(w.publicKey.Y.Bytes())

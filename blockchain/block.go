@@ -1,22 +1,20 @@
-package block
+package blockchain
 
 import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/stinkymonkeyph/goblock/node/transaction"
 )
 
 type Block struct {
 	Timestamp    int64
 	Nonce        int
 	PreviousHash [32]byte
-	Transactions []*transaction.Transaction
+	Transactions []*Transaction
 }
 
-func NewBlock(nonce int, previousHash [32]byte, transactions []*transaction.Transaction) *Block {
+func NewBlock(nonce int, previousHash [32]byte, transactions []*Transaction) *Block {
 	b := new(Block)
 
 	b.Timestamp = time.Now().UnixNano()
@@ -43,10 +41,10 @@ func (b *Block) Hash() [32]byte {
 
 func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Timestamp    int64                      `json:"timestamp"`
-		Nonce        int                        `json:"nonce"`
-		PreviousHash [32]byte                   `json:"previous_hash"`
-		Transactions []*transaction.Transaction `json:"transactions"`
+		Timestamp    int64          `json:"timestamp"`
+		Nonce        int            `json:"nonce"`
+		PreviousHash [32]byte       `json:"previous_hash"`
+		Transactions []*Transaction `json:"transactions"`
 	}{
 		Timestamp:    b.Timestamp,
 		Nonce:        b.Nonce,
