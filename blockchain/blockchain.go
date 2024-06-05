@@ -52,7 +52,7 @@ func (bc *BlockChain) LasBlock() *Block {
 }
 
 func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
-	t := NewTransaction(sender, recipient, value)
+	t := NewTransaction(sender, recipient, value, s)
 
 	if sender == MINING_SENDER {
 		bc.transactionPool = append(bc.transactionPool, t)
@@ -93,7 +93,7 @@ func (bc *BlockChain) ProofOfWork() int {
 func (bc *BlockChain) CopyTransactionPool() []*Transaction {
 	t := make([]*Transaction, 0)
 	for _, tx := range bc.transactionPool {
-		t = append(t, NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value))
+		t = append(t, NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature))
 	}
 	return t
 }

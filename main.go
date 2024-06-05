@@ -24,5 +24,11 @@ func main() {
 
 	bc.Mining()
 
+	t = wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 120)
+
+	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature())
+
+	bc.Mining()
+
 	bc.Print()
 }
