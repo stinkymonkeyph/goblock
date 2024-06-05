@@ -25,7 +25,7 @@ func (t *Transaction) Print() {
 	fmt.Printf("recipient_address \t%s \n", t.RecipientAddress)
 	fmt.Printf("value \t%1f \n", t.Value)
 	if t.SenderAddress == MINING_SENDER {
-		fmt.Println("signature miner tx")
+		fmt.Println("tx contains miner reward")
 	} else {
 		fmt.Printf("signature \t%064x%064x \n", t.Signature.R, t.Signature.S)
 	}
