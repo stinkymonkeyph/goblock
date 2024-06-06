@@ -54,8 +54,7 @@ func NewWallet() *Wallet {
 	copy(dc8[:21], vd4[:])
 	copy(dc8[21:], chksum[:])
 
-	w.address = base58.Encode(dc8)
-
+	w.address = fmt.Sprintf("goblock%s", base58.Encode(dc8))
 	return w
 }
 
