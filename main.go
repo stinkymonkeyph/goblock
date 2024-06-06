@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/stinkymonkeyph/goblock/blockchain"
@@ -20,8 +19,6 @@ func main() {
 
 	senderWallet, _ := wallet.ImportWallet(mnemonic)
 	receiverWallet := wallet.NewWallet()
-
-	fmt.Printf("sender wallet seed: %s \n", senderWallet.Mnemonic())
 
 	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130)
 
