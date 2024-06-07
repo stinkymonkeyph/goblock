@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/stinkymonkeyph/goblock/blockchain"
@@ -20,17 +21,30 @@ func main() {
 	senderWallet, _ := wallet.ImportWallet(mnemonic)
 	receiverWallet := wallet.NewWallet()
 
-	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130)
+	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130, blockchain.TRANSFER)
 
-	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130, senderWallet.PublicKey(), t.GenerateSignature())
-
-	bc.Mining()
-
-	t = wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 120)
-
-	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature())
+	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
 
 	bc.Mining()
 
-	bc.Print()
+	t = wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 120, blockchain.TRANSFER)
+
+	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+
+	bc.Mining()
+
+	walletTransactions := bc.GetTransactionsByWalletAddress(senderWallet.Address())
+
+	fmt.Println("Sender Wallet Transctions: ")
+	for _, wt := range walletTransactions {
+		tx := wt.Transaction
+		bh := wt.BlockHeight
+		fmt.Printf("sender: %s \n", tx.SenderAddress)
+		fmt.Printf("receiver: %s \n", tx.RecipientAddress)
+		fmt.Printf("amount: %1f \n", tx.Value)
+
+		block := bc.GetBlockByHeight(bh)
+		block.Print()
+	}
+
 }

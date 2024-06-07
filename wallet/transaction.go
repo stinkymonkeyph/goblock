@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 
+	"github.com/stinkymonkeyph/goblock/blockchain"
 	"github.com/stinkymonkeyph/goblock/utils"
 )
 
@@ -15,10 +16,11 @@ type Transaction struct {
 	SenderAddress    string
 	RecipientAddress string
 	Value            float32
+	TransactionType  blockchain.TransactionType
 }
 
-func NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, sender string, recipient string, value float32) *Transaction {
-	return &Transaction{senderPrivateKey: privateKey, senderPublicKey: publicKey, SenderAddress: sender, RecipientAddress: recipient, Value: value}
+func NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, sender string, recipient string, value float32, transactionType blockchain.TransactionType) *Transaction {
+	return &Transaction{senderPrivateKey: privateKey, senderPublicKey: publicKey, SenderAddress: sender, RecipientAddress: recipient, Value: value, TransactionType: transactionType}
 }
 
 func (t *Transaction) GenerateSignature() *utils.Signature {
@@ -31,12 +33,14 @@ func (t *Transaction) GenerateSignature() *utils.Signature {
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Sender    string  `json:"sender_address"`
-		Recipient string  `json:"recipient_address"`
-		Value     float32 `json:"value"`
+		Sender          string                     `json:"sender_address"`
+		Recipient       string                     `json:"recipient_address"`
+		Value           float32                    `json:"value"`
+		TransactionType blockchain.TransactionType `json:"transaction_type"`
 	}{
-		Sender:    t.SenderAddress,
-		Recipient: t.RecipientAddress,
-		Value:     t.Value,
+		Sender:          t.SenderAddress,
+		Recipient:       t.RecipientAddress,
+		Value:           t.Value,
+		TransactionType: t.TransactionType,
 	})
 }

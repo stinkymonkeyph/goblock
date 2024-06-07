@@ -17,10 +17,25 @@ const (
 	MINING_REWARD    = 1.0
 )
 
+type TransactionBlockHeight struct {
+	BlockHeight int
+	Transaction *Transaction
+}
+
+type WalletTransactionIndex struct {
+	transactionBlockHeights []*TransactionBlockHeight
+}
+
 type BlockChain struct {
-	transactionPool   []*Transaction
-	chain             []*Block
-	blockchainAddress string
+	transactionPool                      []*Transaction
+	chain                                []*Block
+	blockchainAddress                    string
+	walletTransactionIndex               map[string]*WalletTransactionIndex
+	blockHeightTransactionSignatureIndex map[string]int
+}
+
+func (bc *BlockChain) GetBlockHeightTransactionSignatureIndex() *map[string]int {
+	return &bc.blockHeightTransactionSignatureIndex
 }
 
 func NewBlockchain(blockchainAddress string) *BlockChain {
@@ -28,6 +43,8 @@ func NewBlockchain(blockchainAddress string) *BlockChain {
 	bc := new(BlockChain)
 	bc.CreateBlock(0, b.Hash())
 	bc.blockchainAddress = blockchainAddress
+	bc.walletTransactionIndex = make(map[string]*WalletTransactionIndex)
+	bc.blockHeightTransactionSignatureIndex = make(map[string]int)
 	return bc
 }
 
@@ -35,8 +52,45 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	b := NewBlock(nonce, previousHash, bc.transactionPool)
 	bc.chain = append(bc.chain, b)
 	bc.transactionPool = []*Transaction{}
+
+	for _, tx := range b.Transactions {
+		if _, exists := bc.walletTransactionIndex[tx.SenderAddress]; !exists {
+			bc.walletTransactionIndex[tx.SenderAddress] = &WalletTransactionIndex{
+				transactionBlockHeights: []*TransactionBlockHeight{},
+			}
+		}
+
+		if _, exists := bc.walletTransactionIndex[tx.RecipientAddress]; !exists {
+			bc.walletTransactionIndex[tx.RecipientAddress] = &WalletTransactionIndex{
+				transactionBlockHeights: []*TransactionBlockHeight{},
+			}
+		}
+		var signature string
+
+		if tx.SenderAddress != MINING_SENDER {
+			signature = fmt.Sprintf("%064x%064x", tx.Signature.R, tx.Signature.S)
+		} else {
+			hash := sha256.New()
+			txb, _ := json.Marshal(tx)
+			hash.Write(txb)
+			signature = fmt.Sprintf("miner%x", hash.Sum(nil))
+		}
+
+		fmt.Println(signature)
+		blockHeight := len(bc.chain) - 1
+		bc.blockHeightTransactionSignatureIndex[signature] = blockHeight
+		transactionBlockHeight := &TransactionBlockHeight{Transaction: tx, BlockHeight: blockHeight}
+		bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights, transactionBlockHeight)
+		bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights, transactionBlockHeight)
+
+	}
+
 	log.Printf("action=createBlock, status=success, metadata={timestamp: %d, nonce: %d, previousHash: %x} \n", b.Timestamp, b.Nonce, b.PreviousHash)
 	return b
+}
+
+func (bc *BlockChain) GetBlockByHeight(height int) *Block {
+	return bc.chain[height]
 }
 
 func (bc *BlockChain) Print() {
@@ -51,8 +105,8 @@ func (bc *BlockChain) LasBlock() *Block {
 	return bc.chain[len(bc.chain)-1]
 }
 
-func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature) bool {
-	t := NewTransaction(sender, recipient, value, s)
+func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) bool {
+	t := NewTransaction(sender, recipient, value, s, transactionType)
 
 	if sender == MINING_SENDER {
 		bc.transactionPool = append(bc.transactionPool, t)
@@ -62,7 +116,20 @@ func (bc *BlockChain) AddTransaction(sender string, recipient string, value floa
 		log.Println("action=addTransaction, state=failed, status_reason=invalid_signature")
 		return false
 	}
+
 	return true
+}
+
+func (bc *BlockChain) GetTransactionsByWalletAddress(walletAddress string) []*TransactionBlockHeight {
+	var transactions []*TransactionBlockHeight
+	if wti, exists := bc.walletTransactionIndex[walletAddress]; exists {
+		transactions = append(transactions, wti.transactionBlockHeights...)
+	}
+	return transactions
+}
+
+func (bc *BlockChain) GetBlockHeightByTransactionSignature(signature string) int {
+	return bc.blockHeightTransactionSignatureIndex[signature]
 }
 
 func (bc *BlockChain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKey, s *utils.Signature, t *Transaction) bool {
@@ -93,13 +160,13 @@ func (bc *BlockChain) ProofOfWork() int {
 func (bc *BlockChain) CopyTransactionPool() []*Transaction {
 	t := make([]*Transaction, 0)
 	for _, tx := range bc.transactionPool {
-		t = append(t, NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature))
+		t = append(t, NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature, tx.TransactionType))
 	}
 	return t
 }
 
 func (bc *BlockChain) Mining() bool {
-	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil)
+	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil, BLOCK_REWARD)
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LasBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
