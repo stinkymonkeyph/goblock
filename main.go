@@ -37,14 +37,12 @@ func main() {
 
 	fmt.Println("Sender Wallet Transctions: ")
 	for _, wt := range walletTransactions {
-		tx := wt.Transaction
 		bh := wt.BlockHeight
-		fmt.Printf("sender: %s \n", tx.SenderAddress)
-		fmt.Printf("receiver: %s \n", tx.RecipientAddress)
-		fmt.Printf("amount: %1f \n", tx.Value)
-
+		transactionOrderNumber := wt.TransactionOrderNumber
 		block := bc.GetBlockByHeight(bh)
 		block.Print()
+		tx := block.GetTransactionByOrderNumber(transactionOrderNumber)
+		tx.Print()
 	}
 
 }

@@ -39,6 +39,10 @@ func (b *Block) Hash() [32]byte {
 	return sha256.Sum256([]byte(m))
 }
 
+func (b *Block) GetTransactionByOrderNumber(orderNumber int) *Transaction {
+	return b.Transactions[orderNumber]
+}
+
 func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Timestamp    int64          `json:"timestamp"`

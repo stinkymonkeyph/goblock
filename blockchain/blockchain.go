@@ -18,8 +18,9 @@ const (
 )
 
 type TransactionBlockHeight struct {
-	BlockHeight int
-	Transaction *Transaction
+	BlockHeight            int
+	TransactionOrderNumber int
+	Transaction            *Transaction
 }
 
 type WalletTransactionIndex struct {
@@ -53,7 +54,7 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	bc.chain = append(bc.chain, b)
 	bc.transactionPool = []*Transaction{}
 
-	for _, tx := range b.Transactions {
+	for index, tx := range b.Transactions {
 		if _, exists := bc.walletTransactionIndex[tx.SenderAddress]; !exists {
 			bc.walletTransactionIndex[tx.SenderAddress] = &WalletTransactionIndex{
 				transactionBlockHeights: []*TransactionBlockHeight{},
@@ -79,7 +80,7 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 		fmt.Println(signature)
 		blockHeight := len(bc.chain) - 1
 		bc.blockHeightTransactionSignatureIndex[signature] = blockHeight
-		transactionBlockHeight := &TransactionBlockHeight{Transaction: tx, BlockHeight: blockHeight}
+		transactionBlockHeight := &TransactionBlockHeight{Transaction: tx, TransactionOrderNumber: index, BlockHeight: blockHeight}
 		bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights, transactionBlockHeight)
 		bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights, transactionBlockHeight)
 
