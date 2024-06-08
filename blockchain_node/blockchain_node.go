@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -29,7 +28,9 @@ func (bcn *BlockchainNode) GetChain(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
 	bc := bcn.GetBlockchain()
 	m, _ := json.Marshal(bc)
-	_, err := io.WriteString(w, string(m[:]))
+
+	_, err := w.Write(m)
+
 	if err != nil {
 		log.Fatal("something went wrong while processing request", err)
 	}
