@@ -13,6 +13,7 @@ type TransactionType int
 const (
 	TRANSFER TransactionType = iota
 	BLOCK_REWARD
+	SYSTEM_AIRDROP
 )
 
 type Transaction struct {
@@ -24,7 +25,7 @@ type Transaction struct {
 }
 
 func (tt TransactionType) String() string {
-	return [...]string{"TRANSFER", "BLOCK_REWARD"}[tt]
+	return [...]string{"TRANSFER", "BLOCK_REWARD", "SYSTEM_AIRDROP"}[tt]
 }
 
 func NewTransaction(sender string, recipient string, value float32, signature *utils.Signature, transactionType TransactionType) *Transaction {

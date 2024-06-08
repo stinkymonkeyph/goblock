@@ -31,9 +31,13 @@ func main() {
 	senderWallet, _ := wallet.ImportWallet(mnemonic)
 	receiverWallet := wallet.NewWallet()
 
-	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130, blockchain.TRANSFER)
+	//since transactions will fail because sender wallet don't have balance, we will airdrop coins to sender wallet
+	bc.Airdrop(senderWallet.Address())
+	bc.Mining()
 
-	_, result := bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130.20, blockchain.TRANSFER)
+
+	_, result := bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130.20, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
 
 	interpretAddTransactionResult(result)
 
@@ -50,6 +54,7 @@ func main() {
 	walletTransactions := bc.GetTransactionsByWalletAddress(senderWallet.Address())
 
 	fmt.Println("Sender Wallet Transctions: ")
+	//here we will make test data indexes
 	for _, wt := range walletTransactions {
 		bh := wt.BlockHeight
 		transactionOrderNumber := wt.TransactionOrderNumber
@@ -59,4 +64,6 @@ func main() {
 		tx.Print()
 	}
 
+	senderWalletBalance := bc.GetWalletBalance(senderWallet.Address())
+	fmt.Printf("Sender Balance: \t %1f \n", senderWalletBalance)
 }

@@ -15,6 +15,8 @@ const (
 	MINING_DIFICULTY = 4
 	MINING_SENDER    = "BLOCKCHAIN REWARD SYSTEM"
 	MINING_REWARD    = 1.0
+	AIRDROP_SENDER   = "BLOCKCHAIN AIRDROP SYSTEM"
+	AIRDROP_AMOUNT   = 1000
 )
 
 type AddTransactionResult int
@@ -40,6 +42,10 @@ type BlockChain struct {
 	chain                  []*Block
 	blockchainAddress      string
 	walletTransactionIndex map[string]*WalletTransactionIndex
+}
+
+func (bc *BlockChain) Airdrop(address string) {
+	bc.AddTransaction(AIRDROP_SENDER, address, AIRDROP_AMOUNT, nil, nil, SYSTEM_AIRDROP)
 }
 
 func NewBlockchain(blockchainAddress string) *BlockChain {
@@ -121,7 +127,7 @@ func (atr AddTransactionResult) String() string {
 func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) (bool, AddTransactionResult) {
 	t := NewTransaction(sender, recipient, value, s, transactionType)
 
-	if sender == MINING_SENDER {
+	if sender == MINING_SENDER || sender == AIRDROP_SENDER {
 		bc.transactionPool = append(bc.transactionPool, t)
 	} else if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
 		senderWalletBalance := bc.GetWalletBalance(sender)
