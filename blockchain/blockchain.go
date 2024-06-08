@@ -28,9 +28,9 @@ const (
 )
 
 type TransactionBlockHeight struct {
-	BlockHeight            int
-	TransactionOrderNumber int
-	Transaction            *Transaction
+	BlockHeight      int
+	TransactionIndex int
+	Transaction      *Transaction
 }
 
 type WalletTransactionIndex struct {
@@ -76,7 +76,7 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 		}
 
 		blockHeight := len(bc.chain) - 1
-		transactionBlockHeight := &TransactionBlockHeight{Transaction: tx, TransactionOrderNumber: index, BlockHeight: blockHeight}
+		transactionBlockHeight := &TransactionBlockHeight{Transaction: tx, TransactionIndex: index, BlockHeight: blockHeight}
 		bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights, transactionBlockHeight)
 		bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights, transactionBlockHeight)
 
@@ -104,16 +104,22 @@ func (bc *BlockChain) LasBlock() *Block {
 
 func (bc *BlockChain) GetWalletBalanceByAddress(address string) float32 {
 	wtx := bc.GetTransactionsByWalletAddress(address)
-
 	var balance float32
 
 	for _, wt := range wtx {
-		if wt.Transaction.SenderAddress == address {
-			balance -= wt.Transaction.Value
-		}
+		b := bc.GetBlockByHeight(wt.BlockHeight)
+		proof, _ := GenerateMerkleProof(b.Transactions, wt.TransactionIndex)
 
-		if wt.Transaction.RecipientAddress == address {
-			balance += wt.Transaction.Value
+		if VerifyTransaction(b.MerkleRoot, wt.Transaction, proof) {
+			if wt.Transaction.SenderAddress == address {
+				balance -= wt.Transaction.Value
+			}
+
+			if wt.Transaction.RecipientAddress == address {
+				balance += wt.Transaction.Value
+			}
+		} else {
+			panic("halting chain, detected a suspicious transaction")
 		}
 	}
 
@@ -149,6 +155,15 @@ func (bc *BlockChain) AddTransaction(sender string, recipient string, value floa
 func (bc *BlockChain) GetTransactionsByWalletAddress(walletAddress string) []*TransactionBlockHeight {
 	var transactions []*TransactionBlockHeight
 	if wti, exists := bc.walletTransactionIndex[walletAddress]; exists {
+
+		for _, tx := range wti.transactionBlockHeights {
+			b := bc.GetBlockByHeight(tx.BlockHeight)
+			proof, _ := GenerateMerkleProof(b.Transactions, tx.TransactionIndex)
+			if !VerifyTransaction(b.MerkleRoot, tx.Transaction, proof) {
+				panic("halting chain, detected a suspicious transaction")
+			}
+		}
+
 		transactions = append(transactions, wti.transactionBlockHeights...)
 	}
 	return transactions

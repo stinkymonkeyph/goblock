@@ -57,10 +57,10 @@ func main() {
 	//here we will make test data indexes
 	for _, wt := range walletTransactions {
 		bh := wt.BlockHeight
-		transactionOrderNumber := wt.TransactionOrderNumber
+		transactionIndex := wt.TransactionIndex
 		block := bc.GetBlockByHeight(bh)
 		block.Print()
-		tx := block.GetTransactionByOrderNumber(transactionOrderNumber)
+		tx := block.GetTransactionByOrderNumber(transactionIndex)
 		tx.Print()
 	}
 
