@@ -58,14 +58,14 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Timestamp    int64          `json:"timestamp"`
 		Nonce        int            `json:"nonce"`
-		PreviousHash [32]byte       `json:"previous_hash"`
+		PreviousHash string         `json:"previous_hash"`
 		Transactions []*Transaction `json:"transactions"`
-		MerkleRoot   []byte         `json:"merkle_root"`
+		MerkleRoot   string         `json:"merkle_root"`
 	}{
 		Timestamp:    b.Timestamp,
 		Nonce:        b.Nonce,
-		PreviousHash: b.PreviousHash,
+		PreviousHash: fmt.Sprintf("%x", b.PreviousHash),
 		Transactions: b.Transactions,
-		MerkleRoot:   b.MerkleRoot,
+		MerkleRoot:   fmt.Sprintf("%x", b.MerkleRoot),
 	})
 }
