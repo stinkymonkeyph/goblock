@@ -17,6 +17,14 @@ const (
 	MINING_REWARD    = 1.0
 )
 
+type AddTransactionResult int
+
+const (
+	SUCCESS AddTransactionResult = iota
+	FAILED_INSUFFICIENT_BALANCE
+	FAILED_INVALID_SIGNATURE
+)
+
 type TransactionBlockHeight struct {
 	BlockHeight            int
 	TransactionOrderNumber int
@@ -88,19 +96,48 @@ func (bc *BlockChain) LasBlock() *Block {
 	return bc.chain[len(bc.chain)-1]
 }
 
-func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) bool {
+func (bc *BlockChain) GetWalletBalance(address string) float32 {
+	wtx := bc.GetTransactionsByWalletAddress(address)
+
+	var balance float32
+
+	for _, wt := range wtx {
+		if wt.Transaction.SenderAddress == address {
+			balance -= wt.Transaction.Value
+		}
+
+		if wt.Transaction.RecipientAddress == address {
+			balance += wt.Transaction.Value
+		}
+	}
+
+	return balance
+}
+
+func (atr AddTransactionResult) String() string {
+	return [...]string{"SUCCESS", "FAILED_INSUFFICIENT_BALANCE", "FAILED_INVALID_SIGNATURE"}[atr]
+}
+
+func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) (bool, AddTransactionResult) {
 	t := NewTransaction(sender, recipient, value, s, transactionType)
 
 	if sender == MINING_SENDER {
 		bc.transactionPool = append(bc.transactionPool, t)
 	} else if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
+		senderWalletBalance := bc.GetWalletBalance(sender)
+
+		if senderWalletBalance < value {
+			log.Printf("action=addTransaction, state=failed, status_reason=%s", FAILED_INSUFFICIENT_BALANCE.String())
+			return false, FAILED_INSUFFICIENT_BALANCE
+		}
+
 		bc.transactionPool = append(bc.transactionPool, t)
 	} else {
-		log.Println("action=addTransaction, state=failed, status_reason=invalid_signature")
-		return false
+		log.Printf("action=addTransaction, state=failed, status_reason=%s", FAILED_INVALID_SIGNATURE.String())
+		return false, FAILED_INVALID_SIGNATURE
 	}
 
-	return true
+	return true, SUCCESS
 }
 
 func (bc *BlockChain) GetTransactionsByWalletAddress(walletAddress string) []*TransactionBlockHeight {

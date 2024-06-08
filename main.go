@@ -12,6 +12,16 @@ func init() {
 	log.SetPrefix("Goblock Node: ")
 }
 
+func interpretAddTransactionResult(result blockchain.AddTransactionResult) {
+	if result == blockchain.SUCCESS {
+		fmt.Println("tx succesfully added to the pool")
+	} else if result == blockchain.FAILED_INVALID_SIGNATURE {
+		fmt.Println("tx failed to be added to the pool, invalid signature")
+	} else if result == blockchain.FAILED_INSUFFICIENT_BALANCE {
+		fmt.Println("tx failed to be added to the pool, insufficient balance")
+	}
+}
+
 func main() {
 	minerWallet := wallet.NewWallet()
 	bc := blockchain.NewBlockchain(minerWallet.Address())
@@ -23,13 +33,17 @@ func main() {
 
 	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130, blockchain.TRANSFER)
 
-	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+	_, result := bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+
+	interpretAddTransactionResult(result)
 
 	bc.Mining()
 
 	t = wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 120, blockchain.TRANSFER)
 
-	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+	_, result = bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+
+	interpretAddTransactionResult(result)
 
 	bc.Mining()
 
