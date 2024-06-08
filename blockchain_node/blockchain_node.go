@@ -26,17 +26,12 @@ func (bcn *BlockchainNode) Port() uint16 {
 }
 
 func (bcn *BlockchainNode) GetChain(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		w.Header().Add("Content-Type", "application/json")
-		bc := bcn.GetBlockchain()
-		m, _ := json.Marshal(bc)
-		_, err := io.WriteString(w, string(m[:]))
-		if err != nil {
-			log.Fatal("something went wrong while processing request", err)
-		}
-	default:
-		log.Printf("Error: Invalid HTTP Method")
+	w.Header().Add("Content-Type", "application/json")
+	bc := bcn.GetBlockchain()
+	m, _ := json.Marshal(bc)
+	_, err := io.WriteString(w, string(m[:]))
+	if err != nil {
+		log.Fatal("something went wrong while processing request", err)
 	}
 }
 
@@ -53,7 +48,7 @@ func (bcn *BlockchainNode) GetBlockchain() *blockchain.BlockChain {
 }
 
 func (bcn *BlockchainNode) Run() {
-	http.HandleFunc("/", bcn.GetChain)
+	http.HandleFunc("GET /", bcn.GetChain)
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcn.port)), nil))
 }
