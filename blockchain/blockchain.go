@@ -42,19 +42,31 @@ type BlockChain struct {
 	chain                  []*Block
 	blockchainAddress      string
 	walletTransactionIndex map[string]*WalletTransactionIndex
+	port                   uint16
 }
 
 func (bc *BlockChain) Airdrop(address string) {
 	bc.AddTransaction(AIRDROP_SENDER, address, AIRDROP_AMOUNT, nil, nil, SYSTEM_AIRDROP)
 }
 
-func NewBlockchain(blockchainAddress string) *BlockChain {
+func NewBlockchain(blockchainAddress string, port uint16) *BlockChain {
 	b := &Block{}
 	bc := new(BlockChain)
 	bc.CreateBlock(0, b.Hash())
 	bc.blockchainAddress = blockchainAddress
 	bc.walletTransactionIndex = make(map[string]*WalletTransactionIndex)
+	bc.port = port
 	return bc
+}
+
+func (bc *BlockChain) MarshalJSON() ([]byte, error) {
+	return json.Marshal(
+		struct {
+			Blocks []*Block `json:"chain"`
+		}{
+			Blocks: bc.chain,
+		},
+	)
 }
 
 func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {

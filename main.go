@@ -24,7 +24,7 @@ func interpretAddTransactionResult(result blockchain.AddTransactionResult) {
 
 func main() {
 	minerWallet := wallet.NewWallet()
-	bc := blockchain.NewBlockchain(minerWallet.Address())
+	bc := blockchain.NewBlockchain(minerWallet.Address(), uint16(3111))
 
 	mnemonic := "canyon wood useful gather anxiety elder stomach kid behind rebel pottery tuition maximum video aisle umbrella slush forward come aware remove guilt olympic hard"
 
