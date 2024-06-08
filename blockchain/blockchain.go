@@ -102,7 +102,7 @@ func (bc *BlockChain) LasBlock() *Block {
 	return bc.chain[len(bc.chain)-1]
 }
 
-func (bc *BlockChain) GetWalletBalance(address string) float32 {
+func (bc *BlockChain) GetWalletBalanceByAddress(address string) float32 {
 	wtx := bc.GetTransactionsByWalletAddress(address)
 
 	var balance float32
@@ -130,7 +130,7 @@ func (bc *BlockChain) AddTransaction(sender string, recipient string, value floa
 	if sender == MINING_SENDER || sender == AIRDROP_SENDER {
 		bc.transactionPool = append(bc.transactionPool, t)
 	} else if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
-		senderWalletBalance := bc.GetWalletBalance(sender)
+		senderWalletBalance := bc.GetWalletBalanceByAddress(sender)
 
 		if senderWalletBalance < value {
 			log.Printf("action=addTransaction, state=failed, status_reason=%s", FAILED_INSUFFICIENT_BALANCE.String())
@@ -194,22 +194,4 @@ func (bc *BlockChain) Mining() bool {
 	bc.CreateBlock(nonce, previousHash)
 	log.Println("action=mining, status=success")
 	return true
-}
-
-func (bc *BlockChain) CalculateTotalAmount(address string) float32 {
-	var totalAmount float32 = 0
-	for _, b := range bc.chain {
-		for _, t := range b.Transactions {
-			value := t.Value
-			if t.RecipientAddress == address {
-				totalAmount += value
-			}
-
-			if t.SenderAddress == address {
-				totalAmount -= value
-			}
-		}
-	}
-
-	return totalAmount
 }

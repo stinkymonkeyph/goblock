@@ -64,6 +64,6 @@ func main() {
 		tx.Print()
 	}
 
-	senderWalletBalance := bc.GetWalletBalance(senderWallet.Address())
+	senderWalletBalance := bc.GetWalletBalanceByAddress(senderWallet.Address())
 	fmt.Printf("Sender Balance: \t %1f \n", senderWalletBalance)
 }
