@@ -33,14 +33,14 @@ func (t *Transaction) GenerateSignature() *utils.Signature {
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Sender          string                     `json:"sender_address"`
-		Recipient       string                     `json:"recipient_address"`
-		Value           float32                    `json:"value"`
-		TransactionType blockchain.TransactionType `json:"transaction_type"`
+		Sender          string  `json:"sender_address"`
+		Recipient       string  `json:"recipient_address"`
+		Value           float32 `json:"value"`
+		TransactionType string  `json:"transaction_type"`
 	}{
 		Sender:          t.SenderAddress,
 		Recipient:       t.RecipientAddress,
 		Value:           t.Value,
-		TransactionType: t.TransactionType,
+		TransactionType: t.TransactionType.String(),
 	})
 }
