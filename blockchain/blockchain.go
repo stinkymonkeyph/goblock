@@ -28,15 +28,10 @@ type WalletTransactionIndex struct {
 }
 
 type BlockChain struct {
-	transactionPool                      []*Transaction
-	chain                                []*Block
-	blockchainAddress                    string
-	walletTransactionIndex               map[string]*WalletTransactionIndex
-	blockHeightTransactionSignatureIndex map[string]int
-}
-
-func (bc *BlockChain) GetBlockHeightTransactionSignatureIndex() *map[string]int {
-	return &bc.blockHeightTransactionSignatureIndex
+	transactionPool        []*Transaction
+	chain                  []*Block
+	blockchainAddress      string
+	walletTransactionIndex map[string]*WalletTransactionIndex
 }
 
 func NewBlockchain(blockchainAddress string) *BlockChain {
@@ -45,7 +40,6 @@ func NewBlockchain(blockchainAddress string) *BlockChain {
 	bc.CreateBlock(0, b.Hash())
 	bc.blockchainAddress = blockchainAddress
 	bc.walletTransactionIndex = make(map[string]*WalletTransactionIndex)
-	bc.blockHeightTransactionSignatureIndex = make(map[string]int)
 	return bc
 }
 
@@ -66,20 +60,8 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 				transactionBlockHeights: []*TransactionBlockHeight{},
 			}
 		}
-		var signature string
 
-		if tx.SenderAddress != MINING_SENDER {
-			signature = fmt.Sprintf("%064x%064x", tx.Signature.R, tx.Signature.S)
-		} else {
-			hash := sha256.New()
-			txb, _ := json.Marshal(tx)
-			hash.Write(txb)
-			signature = fmt.Sprintf("miner%x", hash.Sum(nil))
-		}
-
-		fmt.Println(signature)
 		blockHeight := len(bc.chain) - 1
-		bc.blockHeightTransactionSignatureIndex[signature] = blockHeight
 		transactionBlockHeight := &TransactionBlockHeight{Transaction: tx, TransactionOrderNumber: index, BlockHeight: blockHeight}
 		bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights, transactionBlockHeight)
 		bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights, transactionBlockHeight)
@@ -127,10 +109,6 @@ func (bc *BlockChain) GetTransactionsByWalletAddress(walletAddress string) []*Tr
 		transactions = append(transactions, wti.transactionBlockHeights...)
 	}
 	return transactions
-}
-
-func (bc *BlockChain) GetBlockHeightByTransactionSignature(signature string) int {
-	return bc.blockHeightTransactionSignatureIndex[signature]
 }
 
 func (bc *BlockChain) VerifyTransactionSignature(senderPublicKey *ecdsa.PublicKey, s *utils.Signature, t *Transaction) bool {
