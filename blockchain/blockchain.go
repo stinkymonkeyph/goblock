@@ -46,7 +46,8 @@ type BlockChain struct {
 }
 
 func (bc *BlockChain) Airdrop(address string) {
-	bc.AddTransaction(AIRDROP_SENDER, address, AIRDROP_AMOUNT, nil, nil, SYSTEM_AIRDROP)
+	t := NewTransaction(AIRDROP_SENDER, address, AIRDROP_AMOUNT, nil, SYSTEM_AIRDROP)
+	bc.transactionPool = append(bc.transactionPool, t)
 }
 
 func NewBlockchain(blockchainAddress string, port uint16) *BlockChain {
@@ -142,12 +143,16 @@ func (atr AddTransactionResult) String() string {
 	return [...]string{"SUCCESS", "FAILED_INSUFFICIENT_BALANCE", "FAILED_INVALID_SIGNATURE"}[atr]
 }
 
+func (bc *BlockChain) AddBlockReward() bool {
+	t := NewTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, BLOCK_REWARD)
+	bc.transactionPool = append(bc.transactionPool, t)
+	return true
+}
+
 func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) (bool, AddTransactionResult) {
 	t := NewTransaction(sender, recipient, value, s, transactionType)
 
-	if sender == MINING_SENDER || sender == AIRDROP_SENDER {
-		bc.transactionPool = append(bc.transactionPool, t)
-	} else if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
+	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
 		senderWalletBalance := bc.GetWalletBalanceByAddress(sender)
 
 		if senderWalletBalance < value {
@@ -215,7 +220,7 @@ func (bc *BlockChain) CopyTransactionPool() []*Transaction {
 }
 
 func (bc *BlockChain) Mining() bool {
-	bc.AddTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, nil, BLOCK_REWARD)
+	bc.AddBlockReward()
 	nonce := bc.ProofOfWork()
 	previousHash := bc.LasBlock().Hash()
 	bc.CreateBlock(nonce, previousHash)
