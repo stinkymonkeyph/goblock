@@ -48,8 +48,21 @@ func (bcn *BlockchainNode) GetBlockchain() *blockchain.BlockChain {
 	return bc
 }
 
+func (bcn *BlockchainNode) GetWalletBalanceByAddress(w http.ResponseWriter, r *http.Request) {
+	walletAddress := r.PathValue("wallet_address")
+	bc := bcn.GetBlockchain()
+	balance := bc.GetWalletBalanceByAddress(walletAddress)
+
+	w.Header().Add("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(map[string]float32{"balance": balance})
+	if err != nil {
+		log.Fatal("something went wrong while processing request", err)
+	}
+}
+
 func (bcn *BlockchainNode) Run() {
 	http.HandleFunc("GET /", bcn.GetChain)
+	http.HandleFunc("GET /balance/{wallet_address}", bcn.GetWalletBalanceByAddress)
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcn.port)), nil))
 }
