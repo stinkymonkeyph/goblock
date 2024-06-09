@@ -82,7 +82,11 @@ func (bcn *BlockchainNode) GetBlockByBlockHeight(w http.ResponseWriter, r *http.
 func writeJSONError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"message": message})
+	err := json.NewEncoder(w).Encode(map[string]string{"message": message})
+	if err != nil {
+		log.Fatal("something went wrong while processing request", err)
+	}
+
 }
 
 func (bcn *BlockchainNode) Run() {
