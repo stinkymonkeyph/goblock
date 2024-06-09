@@ -58,7 +58,7 @@ func main() {
 	for _, wt := range walletTransactions {
 		bh := wt.BlockHeight
 		transactionIndex := wt.TransactionIndex
-		block := bc.GetBlockByHeight(bh)
+		block, _ := bc.GetBlockByHeight(bh)
 		block.Print()
 		tx := block.GetTransactionByOrderNumber(transactionIndex)
 		tx.Print()

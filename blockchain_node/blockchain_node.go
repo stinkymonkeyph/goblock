@@ -60,9 +60,35 @@ func (bcn *BlockchainNode) GetWalletBalanceByAddress(w http.ResponseWriter, r *h
 	}
 }
 
+func (bcn *BlockchainNode) GetBlockByBlockHeight(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	blockHeight, _ := strconv.Atoi(r.PathValue("height"))
+	bc := bcn.GetBlockchain()
+	b, err := bc.GetBlockByHeight(blockHeight)
+
+	if err != nil {
+		writeJSONError(w, http.StatusBadRequest, "Invalid block height, must be an integer")
+		return
+	}
+
+	bb, _ := json.Marshal(b)
+	_, writeErr := w.Write(bb)
+
+	if writeErr != nil {
+		log.Fatal("something went wrong while processing request", err)
+	}
+}
+
+func writeJSONError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"message": message})
+}
+
 func (bcn *BlockchainNode) Run() {
 	http.HandleFunc("GET /", bcn.GetChain)
 	http.HandleFunc("GET /balance/{wallet_address}", bcn.GetWalletBalanceByAddress)
+	http.HandleFunc("GET /blockByHeight/{height}", bcn.GetBlockByBlockHeight)
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcn.port)), nil))
 }

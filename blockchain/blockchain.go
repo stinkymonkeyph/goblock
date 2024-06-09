@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -71,7 +72,7 @@ func (bc *BlockChain) MarshalJSON() ([]byte, error) {
 }
 
 func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
-	b := NewBlock(nonce, previousHash, bc.transactionPool)
+	b := NewBlock(nonce, previousHash, bc.transactionPool, bc.chain)
 	bc.chain = append(bc.chain, b)
 	bc.transactionPool = []*Transaction{}
 
@@ -99,8 +100,14 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	return b
 }
 
-func (bc *BlockChain) GetBlockByHeight(height int) *Block {
-	return bc.chain[height]
+func (bc *BlockChain) GetBlockByHeight(height int) (*Block, error) {
+	chainLength := len(bc.chain)
+
+	if height > chainLength-1 {
+		return nil, errors.New("Invalid block height")
+	}
+
+	return bc.chain[height], nil
 }
 
 func (bc *BlockChain) Print() {
@@ -120,7 +127,7 @@ func (bc *BlockChain) GetWalletBalanceByAddress(address string) float32 {
 	var balance float32
 
 	for _, wt := range wtx {
-		b := bc.GetBlockByHeight(wt.BlockHeight)
+		b, _ := bc.GetBlockByHeight(wt.BlockHeight)
 		proof, _ := GenerateMerkleProof(b.Transactions, wt.TransactionIndex)
 
 		if VerifyTransaction(b.MerkleRoot, wt.Transaction, proof) {
@@ -174,7 +181,7 @@ func (bc *BlockChain) GetTransactionsByWalletAddress(walletAddress string) []*Tr
 	if wti, exists := bc.walletTransactionIndex[walletAddress]; exists {
 
 		for _, tx := range wti.transactionBlockHeights {
-			b := bc.GetBlockByHeight(tx.BlockHeight)
+			b, _ := bc.GetBlockByHeight(tx.BlockHeight)
 			proof, _ := GenerateMerkleProof(b.Transactions, tx.TransactionIndex)
 			if !VerifyTransaction(b.MerkleRoot, tx.Transaction, proof) {
 				panic("halting chain, detected a suspicious transaction")

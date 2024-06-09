@@ -8,6 +8,7 @@ import (
 )
 
 type Block struct {
+	BlockHeight  int32
 	Timestamp    int64
 	Nonce        int
 	PreviousHash [32]byte
@@ -15,8 +16,9 @@ type Block struct {
 	MerkleRoot   []byte
 }
 
-func NewBlock(nonce int, previousHash [32]byte, transactions []*Transaction) *Block {
+func NewBlock(nonce int, previousHash [32]byte, transactions []*Transaction, block []*Block) *Block {
 	b := new(Block)
+	b.BlockHeight = int32(len(block))
 	b.Timestamp = time.Now().UnixNano()
 	b.Nonce = nonce
 	b.PreviousHash = previousHash
@@ -56,12 +58,14 @@ func (b *Block) GetTransactionByOrderNumber(orderNumber int) *Transaction {
 
 func (b *Block) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
+		BlockHeight  int32          `json:"block_height"`
 		Timestamp    int64          `json:"timestamp"`
 		Nonce        int            `json:"nonce"`
 		PreviousHash string         `json:"previous_hash"`
 		Transactions []*Transaction `json:"transactions"`
 		MerkleRoot   string         `json:"merkle_root"`
 	}{
+		BlockHeight:  b.BlockHeight,
 		Timestamp:    b.Timestamp,
 		Nonce:        b.Nonce,
 		PreviousHash: fmt.Sprintf("%x", b.PreviousHash),
