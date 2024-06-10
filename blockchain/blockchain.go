@@ -28,6 +28,15 @@ const (
 	FAILED_INVALID_SIGNATURE
 )
 
+type TransactionPoolStatus int
+
+const (
+	POOL_PENDING TransactionPoolStatus = iota
+	POOL_ACCEPTED
+	POOL_PROVING
+	POOL_REJECTED
+)
+
 type TransactionBlockHeight struct {
 	BlockHeight      int
 	TransactionIndex int
@@ -38,17 +47,24 @@ type WalletTransactionIndex struct {
 	transactionBlockHeights []*TransactionBlockHeight
 }
 
+type TransactionPool struct {
+	index       int
+	transaction *Transaction
+	status      TransactionPoolStatus
+}
+
 type BlockChain struct {
-	transactionPool        []*Transaction
-	chain                  []*Block
-	blockchainAddress      string
-	walletTransactionIndex map[string]*WalletTransactionIndex
-	port                   uint16
+	transactionPool         []*TransactionPool
+	chain                   []*Block
+	blockchainAddress       string
+	walletTransactionIndex  map[string]*WalletTransactionIndex
+	port                    uint16
+	provingTransactionIndex []int
 }
 
 func (bc *BlockChain) Airdrop(address string) {
 	t := NewTransaction(AIRDROP_SENDER, address, AIRDROP_AMOUNT, nil, SYSTEM_AIRDROP)
-	bc.transactionPool = append(bc.transactionPool, t)
+	bc.AddTransactionToPool(t)
 }
 
 func NewBlockchain(blockchainAddress string, port uint16) *BlockChain {
@@ -72,9 +88,19 @@ func (bc *BlockChain) MarshalJSON() ([]byte, error) {
 }
 
 func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
-	b := NewBlock(nonce, previousHash, bc.transactionPool, bc.chain)
+	var transactions []*Transaction
+
+	for _, provingIndex := range bc.provingTransactionIndex {
+		transactions = append(transactions, bc.transactionPool[provingIndex].transaction)
+		bc.transactionPool[provingIndex].status = POOL_ACCEPTED
+	}
+
+	for _, txp := range bc.transactionPool {
+		transactions = append(transactions, txp.transaction)
+	}
+
+	b := NewBlock(nonce, previousHash, transactions, bc.chain)
 	bc.chain = append(bc.chain, b)
-	bc.transactionPool = []*Transaction{}
 
 	for index, tx := range b.Transactions {
 		if _, exists := bc.walletTransactionIndex[tx.SenderAddress]; !exists {
@@ -93,8 +119,17 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 		transactionBlockHeight := &TransactionBlockHeight{Transaction: tx, TransactionIndex: index, BlockHeight: blockHeight}
 		bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.SenderAddress].transactionBlockHeights, transactionBlockHeight)
 		bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights = append(bc.walletTransactionIndex[tx.RecipientAddress].transactionBlockHeights, transactionBlockHeight)
-
 	}
+
+	newTransactionPool := []*TransactionPool{}
+
+	for _, txp := range bc.transactionPool {
+		if txp.status != POOL_ACCEPTED {
+			newTransactionPool = append(newTransactionPool, txp)
+		}
+	}
+
+	bc.transactionPool = newTransactionPool
 
 	log.Printf("action=createBlock, status=success, metadata={timestamp: %d, nonce: %d, previousHash: %x} \n", b.Timestamp, b.Nonce, b.PreviousHash)
 	return b
@@ -150,9 +185,15 @@ func (atr AddTransactionResult) String() string {
 	return [...]string{"SUCCESS", "FAILED_INSUFFICIENT_BALANCE", "FAILED_INVALID_SIGNATURE"}[atr]
 }
 
+func (bc *BlockChain) AddTransactionToPool(t *Transaction) bool {
+	tp := &TransactionPool{transaction: t, index: len(bc.transactionPool), status: POOL_PENDING}
+	bc.transactionPool = append(bc.transactionPool, tp)
+	return true
+}
+
 func (bc *BlockChain) AddBlockReward() bool {
 	t := NewTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, BLOCK_REWARD)
-	bc.transactionPool = append(bc.transactionPool, t)
+	bc.AddTransactionToPool(t)
 	return true
 }
 
@@ -167,7 +208,7 @@ func (bc *BlockChain) AddTransaction(sender string, recipient string, value floa
 			return false, FAILED_INSUFFICIENT_BALANCE
 		}
 
-		bc.transactionPool = append(bc.transactionPool, t)
+		bc.AddTransactionToPool(t)
 	} else {
 		log.Printf("action=addTransaction, state=failed, status_reason=%s", FAILED_INVALID_SIGNATURE.String())
 		return false, FAILED_INVALID_SIGNATURE
@@ -220,8 +261,13 @@ func (bc *BlockChain) ProofOfWork() int {
 
 func (bc *BlockChain) CopyTransactionPool() []*Transaction {
 	t := make([]*Transaction, 0)
-	for _, tx := range bc.transactionPool {
-		t = append(t, NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature, tx.TransactionType))
+	for index, txp := range bc.transactionPool {
+		tx := txp.transaction
+		if txp.status == POOL_PENDING {
+			t = append(t, NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature, tx.TransactionType))
+			bc.transactionPool[index].status = POOL_PROVING
+			bc.provingTransactionIndex = append(bc.provingTransactionIndex, index)
+		}
 	}
 	return t
 }
