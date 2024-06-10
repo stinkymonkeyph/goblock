@@ -29,13 +29,13 @@ func main() {
 
 	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130.20, blockchain.TRANSFER)
 
-	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130.20, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+	bc.AddTransaction(t.GetId(), senderWallet.Address(), receiverWallet.Address(), 130.20, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
 
 	bc.Mining()
 
 	t = wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 120, blockchain.TRANSFER)
 
-	bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+	bc.AddTransaction(t.GetId(), senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
 
 	bc.Mining()
 
