@@ -37,7 +37,7 @@ func main() {
 
 	t := wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 130.20, blockchain.TRANSFER)
 
-	_, result := bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 130.20, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+	_, result := bc.AddTransaction(t.GetId(), senderWallet.Address(), receiverWallet.Address(), 130.20, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
 
 	interpretAddTransactionResult(result)
 
@@ -45,7 +45,7 @@ func main() {
 
 	t = wallet.NewTransaction(senderWallet.PrivateKey(), senderWallet.PublicKey(), senderWallet.Address(), receiverWallet.Address(), 120, blockchain.TRANSFER)
 
-	_, result = bc.AddTransaction(senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
+	_, result = bc.AddTransaction(t.GetId(), senderWallet.Address(), receiverWallet.Address(), 120, senderWallet.PublicKey(), t.GenerateSignature(), blockchain.TRANSFER)
 
 	interpretAddTransactionResult(result)
 

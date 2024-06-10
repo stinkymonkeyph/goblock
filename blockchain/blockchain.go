@@ -63,7 +63,7 @@ type BlockChain struct {
 }
 
 func (bc *BlockChain) Airdrop(address string) {
-	t := NewTransaction(AIRDROP_SENDER, address, AIRDROP_AMOUNT, nil, SYSTEM_AIRDROP)
+	t := NewSystemTransaction(AIRDROP_SENDER, address, AIRDROP_AMOUNT, SYSTEM_AIRDROP)
 	bc.AddTransactionToPool(t)
 }
 
@@ -192,13 +192,13 @@ func (bc *BlockChain) AddTransactionToPool(t *Transaction) bool {
 }
 
 func (bc *BlockChain) AddBlockReward() bool {
-	t := NewTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, nil, BLOCK_REWARD)
+	t := NewSystemTransaction(MINING_SENDER, bc.blockchainAddress, MINING_REWARD, BLOCK_REWARD)
 	bc.AddTransactionToPool(t)
 	return true
 }
 
-func (bc *BlockChain) AddTransaction(sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) (bool, AddTransactionResult) {
-	t := NewTransaction(sender, recipient, value, s, transactionType)
+func (bc *BlockChain) AddTransaction(id [32]byte, sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) (bool, AddTransactionResult) {
+	t := NewTransaction(id, sender, recipient, value, s, transactionType)
 
 	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
 		senderWalletBalance := bc.GetWalletBalanceByAddress(sender)
@@ -264,7 +264,7 @@ func (bc *BlockChain) CopyTransactionPool() []*Transaction {
 	for index, txp := range bc.transactionPool {
 		tx := txp.transaction
 		if txp.status == POOL_PENDING {
-			t = append(t, NewTransaction(tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature, tx.TransactionType))
+			t = append(t, NewTransaction(tx.Id, tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature, tx.TransactionType))
 			bc.transactionPool[index].status = POOL_PROVING
 			bc.provingTransactionIndex = append(bc.provingTransactionIndex, index)
 		}

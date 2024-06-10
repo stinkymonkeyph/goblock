@@ -17,6 +17,7 @@ const (
 )
 
 type Transaction struct {
+	Id               [32]byte
 	SenderAddress    string
 	RecipientAddress string
 	Value            float32
@@ -28,8 +29,13 @@ func (tt TransactionType) String() string {
 	return [...]string{"TRANSFER", "BLOCK_REWARD", "SYSTEM_AIRDROP"}[tt]
 }
 
-func NewTransaction(sender string, recipient string, value float32, signature *utils.Signature, transactionType TransactionType) *Transaction {
-	return &Transaction{SenderAddress: sender, RecipientAddress: recipient, Value: value, Signature: signature, TransactionType: transactionType}
+func NewSystemTransaction(sender string, recipient string, value float32, transactionType TransactionType) *Transaction {
+	id := utils.GenerateTransactionId(sender, recipient, value)
+	return &Transaction{Id: id, SenderAddress: sender, RecipientAddress: recipient, Value: value, Signature: nil, TransactionType: transactionType}
+}
+
+func NewTransaction(id [32]byte, sender string, recipient string, value float32, signature *utils.Signature, transactionType TransactionType) *Transaction {
+	return &Transaction{Id: id, SenderAddress: sender, RecipientAddress: recipient, Value: value, Signature: signature, TransactionType: transactionType}
 }
 
 func (t *Transaction) Print() {
@@ -47,11 +53,13 @@ func (t *Transaction) Print() {
 
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
+		Id              string  `json:"id"`
 		Sender          string  `json:"sender_address"`
 		Recipient       string  `json:"recipient_address"`
 		Value           float32 `json:"value"`
 		TransactionType string  `json:"transaction_type"`
 	}{
+		Id:              fmt.Sprintf("%x", t.Id),
 		Sender:          t.SenderAddress,
 		Recipient:       t.RecipientAddress,
 		Value:           t.Value,
