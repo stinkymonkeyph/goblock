@@ -74,6 +74,7 @@ func NewBlockchain(blockchainAddress string, port uint16) *BlockChain {
 	bc.blockchainAddress = blockchainAddress
 	bc.walletTransactionIndex = make(map[string]*WalletTransactionIndex)
 	bc.port = port
+	bc.provingTransactionIndex = make([]int, 0)
 	return bc
 }
 
@@ -93,10 +94,6 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	for _, provingIndex := range bc.provingTransactionIndex {
 		transactions = append(transactions, bc.transactionPool[provingIndex].transaction)
 		bc.transactionPool[provingIndex].status = POOL_ACCEPTED
-	}
-
-	for _, txp := range bc.transactionPool {
-		transactions = append(transactions, txp.transaction)
 	}
 
 	b := NewBlock(nonce, previousHash, transactions, bc.chain)
@@ -130,6 +127,7 @@ func (bc *BlockChain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	}
 
 	bc.transactionPool = newTransactionPool
+	bc.provingTransactionIndex = []int{}
 
 	log.Printf("action=createBlock, status=success, metadata={timestamp: %d, nonce: %d, previousHash: %x} \n", b.Timestamp, b.Nonce, b.PreviousHash)
 	return b
@@ -197,8 +195,8 @@ func (bc *BlockChain) AddBlockReward() bool {
 	return true
 }
 
-func (bc *BlockChain) AddTransaction(id [32]byte, sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType) (bool, AddTransactionResult) {
-	t := NewTransaction(id, sender, recipient, value, s, transactionType)
+func (bc *BlockChain) AddTransaction(id [32]byte, sender string, recipient string, value float32, senderPublicKey *ecdsa.PublicKey, s *utils.Signature, transactionType TransactionType, timestamp int64) (bool, AddTransactionResult) {
+	t := NewTransaction(id, sender, recipient, value, s, transactionType, timestamp)
 
 	if bc.VerifyTransactionSignature(senderPublicKey, s, t) {
 		senderWalletBalance := bc.GetWalletBalanceByAddress(sender)
@@ -264,7 +262,7 @@ func (bc *BlockChain) CopyTransactionPool() []*Transaction {
 	for index, txp := range bc.transactionPool {
 		tx := txp.transaction
 		if txp.status == POOL_PENDING {
-			t = append(t, NewTransaction(tx.Id, tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature, tx.TransactionType))
+			t = append(t, NewTransaction(tx.Id, tx.SenderAddress, tx.RecipientAddress, tx.Value, tx.Signature, tx.TransactionType, tx.Timestamp))
 			bc.transactionPool[index].status = POOL_PROVING
 			bc.provingTransactionIndex = append(bc.provingTransactionIndex, index)
 		}

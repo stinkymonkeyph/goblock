@@ -4,7 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"time"
+
+	"github.com/stinkymonkeyph/goblock/utils"
 )
 
 type Block struct {
@@ -19,7 +20,7 @@ type Block struct {
 func NewBlock(nonce int, previousHash [32]byte, transactions []*Transaction, block []*Block) *Block {
 	b := new(Block)
 	b.BlockHeight = int32(len(block))
-	b.Timestamp = time.Now().UnixNano()
+	b.Timestamp = utils.GenerateTimeStamp()
 	b.Nonce = nonce
 	b.PreviousHash = previousHash
 	b.Transactions = transactions

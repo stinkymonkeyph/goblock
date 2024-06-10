@@ -12,7 +12,8 @@ import (
 )
 
 type Transaction struct {
-	id               [32]byte
+	Id               [32]byte
+	Timestamp        int64
 	senderPrivateKey *ecdsa.PrivateKey
 	senderPublicKey  *ecdsa.PublicKey
 	SenderAddress    string
@@ -23,11 +24,8 @@ type Transaction struct {
 
 func NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, sender string, recipient string, value float32, transactionType blockchain.TransactionType) *Transaction {
 	id := utils.GenerateTransactionId(sender, recipient, value)
-	return &Transaction{id: id, senderPrivateKey: privateKey, senderPublicKey: publicKey, SenderAddress: sender, RecipientAddress: recipient, Value: value, TransactionType: transactionType}
-}
-
-func (t *Transaction) GetId() [32]byte {
-	return t.id
+	timestamp := utils.GenerateTimeStamp()
+	return &Transaction{Id: id, senderPrivateKey: privateKey, senderPublicKey: publicKey, SenderAddress: sender, RecipientAddress: recipient, Value: value, TransactionType: transactionType, Timestamp: timestamp}
 }
 
 func (t *Transaction) GenerateSignature() *utils.Signature {
@@ -41,12 +39,14 @@ func (t *Transaction) GenerateSignature() *utils.Signature {
 func (t *Transaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Id              string  `json:"id"`
+		Timestamp       int64   `json:"timestamp"`
 		Sender          string  `json:"sender_address"`
 		Recipient       string  `json:"recipient_address"`
 		Value           float32 `json:"value"`
 		TransactionType string  `json:"transaction_type"`
 	}{
-		Id:              fmt.Sprintf("%x", t.id),
+		Id:              fmt.Sprintf("%x", t.Id),
+		Timestamp:       t.Timestamp,
 		Sender:          t.SenderAddress,
 		Recipient:       t.RecipientAddress,
 		Value:           t.Value,
