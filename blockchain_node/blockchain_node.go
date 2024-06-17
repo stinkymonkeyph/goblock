@@ -60,6 +60,19 @@ func (bcn *BlockchainNode) GetWalletBalanceByAddress(w http.ResponseWriter, r *h
 	}
 }
 
+func (bcn *BlockchainNode) GetTransactionsByWalletAddress(w http.ResponseWriter, r *http.Request) {
+	walletAddress := chi.URLParam(r, "wallet_address")
+	bc := bcn.GetBlockchain()
+	tx := bc.GetTransactionsByWalletAddress(walletAddress)
+	m, _ := json.Marshal(tx)
+
+	_, err := w.Write(m)
+
+	if err != nil {
+		log.Fatal("something went wrong while processing request", err)
+	}
+}
+
 func (bcn *BlockchainNode) GetBlockByBlockHeight(w http.ResponseWriter, r *http.Request) {
 	blockHeight, _ := strconv.Atoi(chi.URLParam(r, "height"))
 	bc := bcn.GetBlockchain()
@@ -101,7 +114,8 @@ func (bcn *BlockchainNode) Run() {
 
 	r.Get("/", bcn.GetChain)
 	r.Get("/balance/{wallet_address}", bcn.GetWalletBalanceByAddress)
-	r.Get("/blockByHeight/{height}", bcn.GetBlockByBlockHeight)
+	r.Get("/wallet/{wallet_address}", bcn.GetTransactionsByWalletAddress)
+	r.Get("/height/{height}", bcn.GetBlockByBlockHeight)
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcn.port)), r))
 }

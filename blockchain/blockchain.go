@@ -38,9 +38,9 @@ const (
 )
 
 type TransactionBlockHeight struct {
-	BlockHeight      int
-	TransactionIndex int
-	Transaction      *Transaction
+	BlockHeight      int          `json:"block_height"`
+	TransactionIndex int          `json:"transaction_index"`
+	Transaction      *Transaction `json:"transaction"`
 }
 
 type WalletTransactionIndex struct {
