@@ -27,7 +27,6 @@ func (bcn *BlockchainNode) Port() uint16 {
 }
 
 func (bcn *BlockchainNode) GetChain(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
 	bc := bcn.GetBlockchain()
 	m, _ := json.Marshal(bc)
 
@@ -55,7 +54,6 @@ func (bcn *BlockchainNode) GetWalletBalanceByAddress(w http.ResponseWriter, r *h
 	bc := bcn.GetBlockchain()
 	balance := bc.GetWalletBalanceByAddress(walletAddress)
 
-	w.Header().Add("Content-Type", "application/json")
 	err := json.NewEncoder(w).Encode(map[string]float32{"balance": balance})
 	if err != nil {
 		log.Fatal("something went wrong while processing request", err)
@@ -63,7 +61,6 @@ func (bcn *BlockchainNode) GetWalletBalanceByAddress(w http.ResponseWriter, r *h
 }
 
 func (bcn *BlockchainNode) GetBlockByBlockHeight(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
 	blockHeight, _ := strconv.Atoi(chi.URLParam(r, "height"))
 	bc := bcn.GetBlockchain()
 	b, err := bc.GetBlockByHeight(blockHeight)
@@ -82,7 +79,6 @@ func (bcn *BlockchainNode) GetBlockByBlockHeight(w http.ResponseWriter, r *http.
 }
 
 func writeJSONError(w http.ResponseWriter, status int, message string) {
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	err := json.NewEncoder(w).Encode(map[string]string{"message": message})
 	if err != nil {
@@ -90,9 +86,18 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 	}
 }
 
+// JSONMiddleware sets the Content-Type header to application/json
+func JSONMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (bcn *BlockchainNode) Run() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(JSONMiddleware)
 
 	r.Get("/", bcn.GetChain)
 	r.Get("/balance/{wallet_address}", bcn.GetWalletBalanceByAddress)
