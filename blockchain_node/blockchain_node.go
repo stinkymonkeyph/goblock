@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/stinkymonkeyph/goblock/blockchain"
 	"github.com/stinkymonkeyph/goblock/wallet"
 )
@@ -49,7 +51,7 @@ func (bcn *BlockchainNode) GetBlockchain() *blockchain.BlockChain {
 }
 
 func (bcn *BlockchainNode) GetWalletBalanceByAddress(w http.ResponseWriter, r *http.Request) {
-	walletAddress := r.PathValue("wallet_address")
+	walletAddress := chi.URLParam(r, "wallet_address")
 	bc := bcn.GetBlockchain()
 	balance := bc.GetWalletBalanceByAddress(walletAddress)
 
@@ -62,7 +64,7 @@ func (bcn *BlockchainNode) GetWalletBalanceByAddress(w http.ResponseWriter, r *h
 
 func (bcn *BlockchainNode) GetBlockByBlockHeight(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
-	blockHeight, _ := strconv.Atoi(r.PathValue("height"))
+	blockHeight, _ := strconv.Atoi(chi.URLParam(r, "height"))
 	bc := bcn.GetBlockchain()
 	b, err := bc.GetBlockByHeight(blockHeight)
 
@@ -86,13 +88,15 @@ func writeJSONError(w http.ResponseWriter, status int, message string) {
 	if err != nil {
 		log.Fatal("something went wrong while processing request", err)
 	}
-
 }
 
 func (bcn *BlockchainNode) Run() {
-	http.HandleFunc("GET /", bcn.GetChain)
-	http.HandleFunc("GET /balance/{wallet_address}", bcn.GetWalletBalanceByAddress)
-	http.HandleFunc("GET /blockByHeight/{height}", bcn.GetBlockByBlockHeight)
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
 
-	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcn.port)), nil))
+	r.Get("/", bcn.GetChain)
+	r.Get("/balance/{wallet_address}", bcn.GetWalletBalanceByAddress)
+	r.Get("/blockByHeight/{height}", bcn.GetBlockByBlockHeight)
+
+	log.Fatal(http.ListenAndServe("0.0.0.0:"+strconv.Itoa(int(bcn.port)), r))
 }
